@@ -1,0 +1,115 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content_title %}{% endblock %}
+
+{% block extrahead %}
+    <script type="text/javascript" src="/admin/jsi18n/"></script>
+    <script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
+    <script type="text/javascript" src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+    <script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+    <script src="{% static 'js/chart.min.js' %}"></script>
+    {{ report_form.media }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/base.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/widgets.css' %}" />
+{% endblock %}
+
+{% block content %}
+    <form method="POST" action="{% url "admin_exchange_rate_evolution" %}">
+        {% csrf_token %}
+    {% for i in '12345'|make_list %}
+        <div class="row">
+            <div class="col">
+                <label>Pair {{ i }}: </label>
+                <select id="source_currency_{{ i }}" name="source_currency_{{ i }}" {% if forloop.first %}required{% endif %}>
+                    <option selected value> -- select an option -- </option>
+                    {% for currency in currencies %}
+                        <option value="{{currency.code}}">{{currency.code}}</option>
+                    {% endfor%}
+                </select>
+                <select id="exchanged_currency_{{ i }}" name="exchanged_currency_{{ i }}" {% if forloop.first %}required{% endif %}>
+                    <option selected value> -- select an option -- </option>
+                    {% for currency in currencies %}
+                        <option value="{{currency.code}}">{{currency.code}}</option>
+                    {% endfor%}
+                </select>
+            </div>
+        </div>
+    {% endfor %}
+        <div class="row">
+            <div class="col">
+                <label for="date_from">Date From: </label>
+                <input type="date" id="date_from" name="date_from" max='{% now "Y-m-d" %}' required>
+
+                <label for="date_to">Date To: </label>
+                <input type="date" id="date_to" name="date_to" max='{% now "Y-m-d" %}' required>
+            </div>
+        </div>
+        <p>
+            <input type="submit" value="Consult" style="float: left;" class="default">
+        </p>
+    </form>
+
+    {% if datasets %}
+
+        <canvas id="myChart" width="400" height="400"></canvas>
+        <script>
+
+        const rgbColours = {
+            1: 'rgb(170, 57, 57)',
+            2: 'rgb(87, 85, 148)',
+            3: 'rgb(254, 244, 0)',
+            4: 'rgb(254, 0, 0)',
+            5: 'rgb(0, 203, 0)',
+        };
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+
+        let datasets = [];
+        let i = 1;
+        {{ datasets|safe }}.forEach(dataset => {
+            datasets.push({
+                label: dataset.label,
+                data: dataset.data,
+                fill: false,
+                borderColor: rgbColours[i],
+                tension: 0.1
+              })
+            i += 1;
+        });
+
+        const data = {
+          labels: {{ days|safe }},
+          datasets: datasets
+        };
+
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Chart.js Line Chart'
+                  }
+                }
+            },
+        });
+
+        </script>
+    {% endif %}
+
+
+{% endblock %}
+
+{% block branding %}
+    <h1 id="site-name"><a
+            href="{% url 'admin:index' %}">{{ site_header|default:_('Administracion de Django') }}</a>
+    </h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

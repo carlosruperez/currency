@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  web:
+    image: currency:0.1
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/webapps
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_NAME: '${DATABASE_NAME}'
+      POSTGRES_DB: '${DATABASE_NAME}'
+      POSTGRES_USER: '${DATABASE_USER}'
+      POSTGRES_PASSWORD: '${DATABASE_PASSWORD}'
+    ports:
+      - '${DATABASE_PORT}:5432'
+    expose:
+      - '5432'
+    volumes:
+      - currency-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+volumes:
+  currency-data:
